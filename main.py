@@ -64,3 +64,25 @@ class SaglikliYasamRandevu(TemelRandevu):
             maliyet = veri.get("maliyet", veri["ucret"] * 0.3),
             durum = veri.get("durum", "Bekliyor")
         )
+        
+def randevulari_yukle():
+    if not os.path.exists(dosya_yolu):
+        return []
+    try:
+        with open(dosya_yolu, "r", encoding="utf-8") as f:
+            veriler = json.load(f)
+            return [SaglikliYasamRandevu.from_dict(v) for v in veriler]
+    except Exception as hata:
+        print(f"[HATA] Dosya okunurken sorun olustu: {hata}")
+        return []
+
+
+def randevulari_kaydet(randevular):
+    try:
+        with open(dosya_yolu, "w", encoding="utf-8") as f:
+            json.dump([r.to_dict() for r in randevular], f, ensure_ascii=False, indent=2)
+        return True
+    except Exception as hata:
+        print(f"[HATA] Dosya kaydedilirken sorun olustu: {hata}")
+        return False
+
