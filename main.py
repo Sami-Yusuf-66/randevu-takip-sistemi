@@ -232,3 +232,112 @@ def randevu_iptal_et(randevular):
             return
 
     print(f"[UYARI] {randevu_id} numaralı randevu bulunamadı.")
+
+
+
+def gelir_kar_hesapla(randevular):
+    print("\n" + "=" * 60)
+    print("      GELİR VE KAR ANALİZ RAPORRU")
+    print("=" * 60)
+
+    tamamlananlar =[r for r in randevular if r.durum == "Tamamlandı"]
+
+    if not tamamlananlar:
+        print("\nHenüz tamamlanmış bir randevu bulunmamaktadır.")
+        return
+
+    ucretler_dizisi = np.array([r.ucret for r in tamamlananlar], dtype = float)
+    ortalama_ucret = np.mean(ucretler_dizisi)
+    toplam_gelir = np.sum(ucretler_dizisi)
+
+    maliyetler_dizisi = np.array([r.maliyet for r in tamamlananlar], dtype = float)
+    toplam_maliyet = np.sum(maliyetler_dizisi)
+    toplam_kar = toplam_gelir - toplam_maliyet
+    kar_yuzdesi = (toplam_kar / toplam_gelir) * 100 if toplam_gelir > 0 else 0
+
+
+    print(f"\n[GENEL ÖZET]")
+    print(f"Tamamlanan Randevu Sayısı: {len(tamamlananlar)}")
+    print(f"Toplam Gelir             : {toplam_gelir} TL")
+    print(f"Toplam Maliyet           : {toplam_maliyet} TL")
+    print(f"Net Kar                  : {toplam_kar} TL")
+    print(f"Kar Yüzdesi              : %{kar_yuzdesi:.2f}")
+    print(f"Ortalama Hizmet Ücreti   : {ortalama_ucret:.2f} TL")
+
+    print("\n[HİZMET TÜRÜNE GÖRE DETAYLI ANALİZ]")
+    veri_listesi = [
+        {
+            "Hizmet Türü": r.hizmet_turu,
+            "Hizmet Adı": r.hizmet_adi,
+            "Ücret": r.ucret,
+            "Maliyet": r.maliyet,
+            "Kar": r.kar_hesapla()
+        }
+        for r in tamamlananlar
+    ]
+
+    df = pd.DataFrame(veri_listesi)
+
+    ozet_tablo = df.groupby("Hizmet Türü").agg(
+        Tamamlanan_Randevu = ("Ücret", "count"),
+        Toplam_Gelir_TL = ("Ücret", "sum"),
+        Toplam_Kar_TL = ("Kar", "sum")
+    ).reset_index()
+
+    ozet_tablo["Kar_Yuzdesi_%"] = ((ozet_tablo["Toplam_Kar_TL"] / ozet_tablo["Toplam_Gelir_TL"]) * 100).round(2)
+
+    print("-" * 70)
+    print(ozet_tablo.to_string(index = False))
+    print("-" * 70)
+
+
+
+def ana_menu():
+    randevular = randevulari_yukle()
+
+    while True:
+        print("\n" + "=" * 45)
+        print(" SAĞLIKLI YAŞAM MERKEZİ RANDEVU SİSTEMİ")
+        print("=" * 45)
+        print("1. Randevuları Listele")
+        print("2. Yeni Rnadevu Ekle")
+        print("3. Randevu Ara")
+        print("4. Randevu Tamamla")
+        print("5. Randevu İptal Et")
+        print("6. Gelir ve Kar Analizi")
+        print("0. Çıkış")
+        print("=" * 45)
+
+        secim = input("Yapmak istediğiniz işlemi seçiniz (0-6): ").strip()
+
+        try:
+            if secim =="1":
+                randevulari_listele(randevular)
+            
+            elif secim == "2":
+                randevu_ekle(randevular)
+            
+            elif secim == "3":
+                randevu_ara(randevular)
+
+            elif secim == "4":
+                randevu_tamamla(randevular)
+
+            elif secim == "5":
+                randevu_iptal_et(randevular)
+
+            elif secim == "6":
+                gelir_kar_hesapla(randevular)
+
+            elif secim == "0":
+                print("\nProgramdan çıkılıyor. Sağlıklı Günler Dileriz!")
+                break
+
+            else:
+                print("\n[UYARI] Lütfen 0 ile 6 arasında bir rakam giriniz.")
+        
+        except Exception as hata:
+            print(f"\n[BEKLENMEYEN HATA] Sir sorun oluştu: {hata}")
+
+if __name__ == "__main__":
+    ana_menu()
